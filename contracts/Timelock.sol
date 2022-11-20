@@ -1,25 +1,159 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-contract SimpleCoin {
-        mapping (address => uint) balances;
+import { MarketAPI } from "../MarketAPI.sol";
+import { CommonTypes } from "../typeLibraries/CommonTypes.sol";
+import { MarketTypes } from "../typeLibraries/MarketTypes.sol";
 
-        constructor() {
-                balances[tx.origin] = 10000;
-        }
+contract Timelock {
+    address public owner;
+    address marketApiAddress = 0xC35A0a19857945cE7AbCA072D60617f5C921D003;
+    mapping(address => uint) public balances;
+    mapping(address => uint) public lockTime;
 
-        function sendCoin(address receiver, uint amount) public returns(bool sufficient) {
-                if (balances[msg.sender] < amount) return false;
-                balances[msg.sender] -= amount;
-                balances[receiver] += amount;
-                return true;
-        }
+    MarketAPI marketApiInstance = MarketAPI(marketApiAddress);
 
-        function getBalanceInEth(address addr) public view returns(uint){
-                return getBalance(addr) * 2;
-        }
+    constructor()  {
+        owner = msg.sender;
+    }
 
-        function getBalance(address addr) public view returns(uint) {
-                return balances[addr];
-        }
+    // bytes memory addr = bytes("0x1111");
+    // MarketTypes.WithdrawBalanceParams memory params = MarketTypes.WithdrawBalanceParams(addr, 1);
+    //MarketTypes.WithdrawBalanceReturn memory response = marketApiInstance.withdraw_balance(params);
+
+    function LockDeal(uint _secondsToIncrease) external payable {
+        uint256 LockTime = _secondsToIncrease;
+        //updates locktime in seconds
+        lockTime[msg.sender] = block.timestamp + LockTime;
+    }
+
+    function currentTimestamp() external view returns (uint256 ) {
+            return block.timestamp;
+    }
+    
+    function increaseLockTime(uint _secondsToIncrease) public {
+         lockTime[msg.sender] = lockTime[msg.sender] + (_secondsToIncrease);
+    }
+
+    function withdraw() public payable{
+        require(balances[msg.sender] > 0, "insufficient funds");
+
+        // check that the now time is > the time saved in the lock time mapping
+        require(block.timestamp > lockTime[msg.sender], "lock time has not expired");
+
+        // update the balance
+        uint amount = balances[msg.sender];
+
+        // send the ether back to the sender
+        payable(msg.sender).transfer(amount);
+       balances[msg.sender] = 0;
+
+    }
+// My inputs
+    function add_balance(string memory params) public payable {
+
+        (bool success, ) =  marketApiInstance.call(
+      abi.encodeWithSignature("add_balance(string)", params));
+      require(success, "call failed");
+    marketApiInstance.add_balance(params);
+
+    }
+
+    function get_balance(string memory addr) public returns (uint) {
+      uint resp = marketApiInstance.get_balance(addr);
+      return resp
+    }
+
+    function withdraw_balance(uint256 _amount
+    ) public returns (uint256) {
+        require(block.timestamp > lockTime[msg.sender], "lock time has not expired");
+
+
+        return contractAddress.withdraw_balance(_amount);
+    }
+
+
+
+    // FIXME set data values correctly
+    function get_deal_data_commitment(
+        string memory params
+    ) public view returns (string memory) {
+        return
+            contractAddress.get_deal_data_commitment(params);
+    }
+
+    function get_deal_client(
+        string memory params
+    ) public view returns (string memory) {
+        return contractAddress.get_deal_client(params);
+    }
+
+    function get_deal_provider(
+        string memory params
+    ) public view returns (string memory) {
+        return contractAddress.get_deal_provider(params);
+    }
+
+    function get_deal_label(
+        string memory params
+    ) public view returns (string memory) {
+        return contractAddress.get_deal_label(params);
+    }
+
+    function get_deal_term(
+        string memory params
+    ) public view returns (string memory) {
+        return
+            contractAddress.get_deal_term(
+                params
+            );
+    }
+
+    function get_deal_epoch_price(
+        string memory params
+    ) public view returns (string memory) {
+        return
+                contractAddress.get_deal_epoch_price(params
+            );
+    }
+
+    function get_deal_client_collateral(
+       string memory params
+    ) public view returns (string memory) {
+
+        return
+                contractAddress.get_deal_client_collateral(params
+            );
+    }
+
+    function get_deal_provider_collateral(
+        string memory params
+    ) public view returns (string memory) {
+     
+        return
+           contractAddress.get_deal_provider_collateral(
+                params
+            );
+    }
+
+    function get_deal_verified(
+        string memory params
+    ) public view returns (string memory) {
+
+        return contractAddress.get_deal_verified(params);
+    }
+
+    function get_deal_activation(
+        string memory params
+    ) public view returns (string memory) {
+  
+        return
+            contractAddress.get_deal_activation(params);
+    }
+
+    function publish_deal(bytes memory raw_auth_params, address callee) public {
+        // calls standard filecoin receiver on message authentication api method number
+        contractAddress.publish_deal(raw_auth_params, callee);
+
+    }
 }
