@@ -1,6 +1,14 @@
 # DEAL-LOCK
 A new and efficient way to Time Lock Storage deals on Storage Providers in the Filecoin network.
 
+This project intends to use a time lock actor on 4 simulated Filecoin storage deals (deals 67 - 70). The project will also allow users to store data in and retrieve data from the Filecoin network via deals. Participants in the network, miners (supply-side) and clients (demand-side), interact with each other via storage deals and retrieval deals. This DApp pulls out various variables of any deal once the time lock expires.
+
+The project made use of the Solidity Mock API from Zondax which has both the MarketAPI and the MinerAPI with Common Libraries. A Timelock contract was created that interacts with Mock MarketAPI since the project objective was to interact with the storage deal, MarketAPI was the API of choice. The smart contracts were deployed to the Wallaby Testnet and interacted with.
+
+The front end was built with Next.js and the interaction with the backend was achieved with ethers.js.
+
+
+
 
 
 

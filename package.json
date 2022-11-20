@@ -38,7 +38,6 @@
     "@coinbase/wallet-sdk": "^3.4.0",
     "@heroicons/react": "^1.0.6",
     "@openzeppelin/contracts": "^4.5.0",
-    "@superfluid-finance/sdk-core": "^0.5.6",
     "@tailwindcss/forms": "^0.3.4",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
