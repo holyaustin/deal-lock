@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import { MarketAPI } from "../MarketAPI.sol";
-import { CommonTypes } from "../typeLibraries/CommonTypes.sol";
-import { MarketTypes } from "../typeLibraries/MarketTypes.sol";
+import { MarketAPI } from "./MarketAPI.sol";
+import { CommonTypes } from "./typeLibraries/CommonTypes.sol";
+import { MarketTypes } from "./typeLibraries/MarketTypes.sol";
 
 contract Timelock {
     address public owner;
@@ -50,71 +50,73 @@ contract Timelock {
 
     }
 // My inputs
-    function add_balance(string memory params) public payable {
+    function add_balance(MarketTypes.AddBalanceParams memory params) public payable {
 
-        (bool success, ) =  marketApiInstance.call(
-      abi.encodeWithSignature("add_balance(string)", params));
-      require(success, "call failed");
-    marketApiInstance.add_balance(params);
-
+        bytes memory payload = abi.encodeWithSignature("add_balance(string)", params);
+        (bool success, bytes memory returnData) = address(marketApiInstance).call(payload);
+        require(success);
     }
 
-    function get_balance(string memory addr) public returns (uint) {
-      uint resp = marketApiInstance.get_balance(addr);
-      return resp
+    function get_balance(string memory addr) public returns (bytes memory) {
+              bytes memory payload = abi.encodeWithSignature("get_balance(string)", addr);
+            (bool success, bytes memory returnData) = address(marketApiInstance).call(payload);
+            require(success);
+            return returnData;
     }
 
-    function withdraw_balance(uint256 _amount
-    ) public returns (uint256) {
+
+    function withdraw_balance(MarketTypes.WithdrawBalanceParams memory params
+    ) public returns (bytes memory) {
         require(block.timestamp > lockTime[msg.sender], "lock time has not expired");
 
+            bytes memory payload = abi.encodeWithSignature("withdraw_balance)", params);
+            (bool success, bytes memory returnData) = address(marketApiInstance).call(payload);
+            require(success);
+            return returnData;
 
-        return contractAddress.withdraw_balance(_amount);
+        //return marketApiInstance.withdraw_balance();
+        //return resp;
     }
 
-
-
+/**
     // FIXME set data values correctly
     function get_deal_data_commitment(
         string memory params
     ) public view returns (string memory) {
         return
-            contractAddress.get_deal_data_commitment(params);
+             marketApiInstance.get_deal_data_commitment(params);
     }
 
     function get_deal_client(
         string memory params
     ) public view returns (string memory) {
-        return contractAddress.get_deal_client(params);
+        return marketApiInstance.get_deal_client(params);
     }
 
     function get_deal_provider(
         string memory params
     ) public view returns (string memory) {
-        return contractAddress.get_deal_provider(params);
+        return marketApiInstance.get_deal_provider(params);
     }
 
     function get_deal_label(
         string memory params
     ) public view returns (string memory) {
-        return contractAddress.get_deal_label(params);
+        return marketApiInstance.get_deal_label(params);
     }
 
     function get_deal_term(
         string memory params
     ) public view returns (string memory) {
         return
-            contractAddress.get_deal_term(
-                params
-            );
+            marketApiInstance.get_deal_term(params);
     }
 
     function get_deal_epoch_price(
         string memory params
     ) public view returns (string memory) {
         return
-                contractAddress.get_deal_epoch_price(params
-            );
+                 marketApiInstance.get_deal_epoch_price(params);
     }
 
     function get_deal_client_collateral(
@@ -122,8 +124,7 @@ contract Timelock {
     ) public view returns (string memory) {
 
         return
-                contractAddress.get_deal_client_collateral(params
-            );
+                 marketApiInstance.get_deal_client_collateral(params);
     }
 
     function get_deal_provider_collateral(
@@ -131,16 +132,14 @@ contract Timelock {
     ) public view returns (string memory) {
      
         return
-           contractAddress.get_deal_provider_collateral(
-                params
-            );
+            marketApiInstance.get_deal_provider_collateral(params);
     }
 
     function get_deal_verified(
         string memory params
     ) public view returns (string memory) {
 
-        return contractAddress.get_deal_verified(params);
+        return marketApiInstance.get_deal_verified(params);
     }
 
     function get_deal_activation(
@@ -148,12 +147,21 @@ contract Timelock {
     ) public view returns (string memory) {
   
         return
-            contractAddress.get_deal_activation(params);
+            marketApiInstance.get_deal_activation(params);
     }
 
     function publish_deal(bytes memory raw_auth_params, address callee) public {
         // calls standard filecoin receiver on message authentication api method number
-        contractAddress.publish_deal(raw_auth_params, callee);
-
+        (bool success, ) = callee.call(
+            abi.encodeWithSignature(
+                "handle_filecoin_method(uint64,uint64,bytes)",
+                0,
+                2643134072,
+                raw_auth_params
+            )
+        );
+        require(success, "client contract failed to authorize deal publish");
     }
+    
+    */
 }
